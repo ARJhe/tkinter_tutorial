@@ -4,11 +4,9 @@ import time as t
 from threading import Timer, Thread, Condition, Event
 import math, os
 
-currentTime = 0
+currentTime = 0 # Catch value of current t.time() while paused
 loopRound = 0
-stopFlag = Event()
-
-
+stopFlag = Event() # Role of passing signal to stop thread
 class Timer(Thread):    
     def __init__(self, event):
         super(Timer, self).__init__()        
@@ -17,16 +15,18 @@ class Timer(Thread):
         self.paused = True  # Start out paused.
         self.state = Condition()        
 
-    def start(self, act=None):
+    def start(self, act=None): # overwrite
+        # Defaultly assign None to parameter "act" to avid activating "initTime" 
+        # while class "Timer" was called.
         self.initTime = t.time()        
         btnStart.config(state=DISABLED)
         if act:            
             return super(Timer, self).start()      
 
-    def run(self):    
+    def run(self): # Overwrite
         global loopRound    
         self.resume()        
-        while not self.stopped.wait(1): # Every 1 second 
+        while not self.stopped.wait(1): # Execute only after 1 second 
             with self.state:
                 if self.paused:
                     self.state.wait()  # Block execution until notified.
@@ -44,7 +44,7 @@ class Timer(Thread):
             self.paused = True  # Block self.
 
     def resume(self):
-        self.initTime = t.time() # reset initTime   
+        self.initTime = t.time() # Reset initTime   
         btnResume.config(state=DISABLED)
         with self.state:
             self.paused = False
@@ -81,7 +81,7 @@ iconResume = PhotoImage(file = iconPATH + r"\resume.png")
 iconReset = PhotoImage(file = iconPATH + r"\reset.png")
 iconExit = PhotoImage(file = iconPATH + r"\exit.png")
 iconPy = PhotoImage(file = iconPATH + r"\python-logo.png")
-timer = Timer(stopFlag) # Create an instance
+timer = Timer(stopFlag) # Call Timer to Create an instance
 btnStart = tk.Button(root ,text='start',command= lambda : timer.start(True), image = iconPlay)
 btnStop = tk.Button(root, text='stop', command= timer.pause, image = iconPause)
 btnResume = tk.Button(root, text='resume', command= timer.resume, state=DISABLED, image = iconResume)
