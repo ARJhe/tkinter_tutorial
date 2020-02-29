@@ -1,5 +1,4 @@
 from tkinter import *
-import tkinter as tk
 import time as t
 from threading import Timer, Thread, Condition, Event
 import math, os
@@ -11,6 +10,7 @@ pyinstaller -F --noconsole --onefile .\Timer.py
 currentTime = 0 # Catch value of current t.time() while paused
 loopRound = 0
 stopFlag = Event() # Role of passing signal to pause thread
+isReset = False
 class myTimer(Thread): # Like a Rockman inherited Thread's methods and attributes.
     def __init__(self, event):
         super(myTimer, self).__init__()        
@@ -22,10 +22,19 @@ class myTimer(Thread): # Like a Rockman inherited Thread's methods and attribute
     def start(self, act=None): # overwrite
         # Defaultly assign None to parameter "act" to avid activating "initTime" 
         # while class "myTimer" was called.
+        global currentTime, isReset, loopRound
         self.initTime = t.time()        
-        btnStart.config(state=DISABLED)
-        if act:            
+        btnStart.config(state=DISABLED)        
+        labScreen['text'] = self.timeConversion(0)
+        # Check whether is reset and activate by btnStart or not
+        if act and not isReset:
             return super(myTimer, self).start()      
+        else:
+            # Re-click start resume can avoid 
+            # self._started.is_set() check()(threading.py Line 847)
+            loopRound = 0
+            currentTime = 0
+            self.resume()
 
     def run(self): # Overwrite
         global loopRound    
@@ -55,24 +64,25 @@ class myTimer(Thread): # Like a Rockman inherited Thread's methods and attribute
             self.state.notify()  # Unblock self if waiting.
 
     def reset(self):
-        global currentTime,loopRound        
-        loopRound = 0
-        currentTime = 0
-        self.resume()
-
+        global isReset                
+        isReset = True               
+        btnStart.config(state=NORMAL)
+        labScreen['text'] = self.timeConversion(0)
+        self.pause()
+    
     def timeConversion(self,sec):
         _hour = math.floor(sec/3600)
         _min = math.floor(sec/60)
         _sec = math.floor(sec - (_min*60) - (_hour*3600))
         return '%02d : %02d : %02d ' % (_hour,_min,_sec)
 
-root = tk.Tk()
+root = Tk()
 root.geometry('400x300')
 root.resizable(0, 0)
 root.config(bg='black')
-labelText = tk.StringVar()
+labelText = StringVar()
 labelText ='press start'
-labScreen = tk.Label(root, text=labelText, fg="white", bg="black",height=5)
+labScreen = Label(root, text=labelText, fg="white", bg="black",height=5)
 labScreen.config(font=("Courier 19 bold"))
 
 iconPATH = os.getcwd() + "\\Timer\icons"
@@ -84,13 +94,13 @@ iconResume = PhotoImage(file = iconPATH + r"\resume.png")
 iconReset = PhotoImage(file = iconPATH + r"\reset.png")
 iconExit = PhotoImage(file = iconPATH + r"\exit.png")
 iconPy = PhotoImage(file = iconPATH + r"\python-logo.png")
-Timer = myTimer(stopFlag) # Call myTimer to Create an instance
-btnStart = tk.Button(root ,text='start',command= lambda : Timer.start(True), image = iconPlay)
-btnStop = tk.Button(root, text='stop', command= Timer.pause, image = iconPause)
-btnResume = tk.Button(root, text='resume', command= Timer.resume, state=DISABLED, image = iconResume)
-btnReset = tk.Button(root, text='reset', command= Timer.reset, image = iconReset)
-btnExit = tk.Button(root, text='Exit',command=root.destroy)
-logo = tk.Label(root, image = iconPy)
+iTimer = myTimer(stopFlag) # Call myTimer to Create an instance
+btnStart = Button(root ,text='start',command= lambda : iTimer.start(True), image = iconPlay)
+btnStop = Button(root, text='stop', command= iTimer.pause, image = iconPause)
+btnResume = Button(root, text='resume', command= iTimer.resume, state=DISABLED, image = iconResume)
+btnReset = Button(root, text='reset', command= iTimer.reset, image = iconReset)
+btnExit = Button(root, text='Exit',command=root.destroy)
+logo = Label(root, image = iconPy)
 
 labScreen.pack(fill='x') # Fill up x-axis.
 btnStart.place(relx=0.3,rely=0.4) # .palce(positioning)
