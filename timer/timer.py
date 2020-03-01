@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from tkinter import *
 import time as t
 from threading import Timer, Thread, Condition, Event
@@ -31,7 +32,7 @@ class myTimer(Thread): # Like a Rockman inherited Thread's methods and attribute
             return super(myTimer, self).start()      
         else:
             # Re-click start resume can avoid 
-            # self._started.is_set() check()(threading.py Line 847)
+            # self._started.is_set() check(threading.py Line 847)
             loopRound = 0
             currentTime = 0
             self.resume()
@@ -67,6 +68,7 @@ class myTimer(Thread): # Like a Rockman inherited Thread's methods and attribute
         global isReset                
         isReset = True               
         btnStart.config(state=NORMAL)
+        btnResume.config(state=DISABLED)  
         labScreen['text'] = self.timeConversion(0)
         self.pause()
     
@@ -95,11 +97,11 @@ iconReset = PhotoImage(file = iconPATH + r"\reset.png")
 iconExit = PhotoImage(file = iconPATH + r"\exit.png")
 iconPy = PhotoImage(file = iconPATH + r"\python-logo.png")
 iTimer = myTimer(stopFlag) # Call myTimer to Create an instance
-btnStart = Button(root ,text='start',command= lambda : iTimer.start(True), image = iconPlay)
-btnStop = Button(root, text='stop', command= iTimer.pause, image = iconPause)
-btnResume = Button(root, text='resume', command= iTimer.resume, state=DISABLED, image = iconResume)
-btnReset = Button(root, text='reset', command= iTimer.reset, image = iconReset)
-btnExit = Button(root, text='Exit',command=root.destroy)
+btnStart = Button(root ,text='start',command= lambda : iTimer.start(True), image = iconPlay, cursor="hand2")
+btnStop = Button(root, text='stop', command= iTimer.pause, image = iconPause, cursor="hand2")
+btnResume = Button(root, text='resume', command= iTimer.resume, state=DISABLED, image = iconResume, cursor="hand2")
+btnReset = Button(root, text='reset', command= iTimer.reset, image = iconReset, cursor="hand2")
+btnExit = Button(root, text='Exit', font= ("Courier 14 bold"),command=root.destroy, cursor="hand2")
 logo = Label(root, image = iconPy)
 
 labScreen.pack(fill='x') # Fill up x-axis.
