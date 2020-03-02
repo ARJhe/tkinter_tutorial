@@ -14,11 +14,11 @@ stopFlag = Event() # Role of passing signal to pause thread
 isReset = False
 class myTimer(Thread): # Like a Rockman inherited Thread's methods and attributes.
     def __init__(self, event):
-        super(myTimer, self).__init__()        
+        super(myTimer, self).__init__()     
         self.stopped = event
         self.daemon = True  # Allow main to exit even if still running.
         self.paused = True  # Start out paused.
-        self.state = Condition()        
+        self.state = Condition()
 
     def start(self, act=None): # overwrite
         # Defaultly assign None to parameter "act" to avid activating "initTime" 
