@@ -8,7 +8,7 @@ import math, os
 pyinstaller -F --noconsole --onefile .\Timer.py
 """
 
-currentTime = 0 # Catch value of current t.time() while paused
+currentTime = 0 # Catch value of current elapsed time while paused
 loopRound = 0
 stopFlag = Event() # Role of passing signal to pause thread
 isReset = False
@@ -27,7 +27,7 @@ class myTimer(Thread): # Like a Rockman inherited Thread's methods and attribute
         self.initTime = t.time()        
         btnStart.config(state=DISABLED)        
         labScreen['text'] = self.timeConversion(0)
-        # Check whether is reset and activate by btnStart or not
+        # Check whether is resetd and activate by btnStart or not
         if act and not isReset:
             return super(myTimer, self).start()      
         else:
