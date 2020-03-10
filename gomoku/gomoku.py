@@ -1,14 +1,12 @@
 #-*- coding: utf-8 -*-
-# author by: ArJhe
+# Author: ArJhe
 from tkinter import *
 from time import time as t
 import sys
 
 root = Tk()
 root.geometry("700x470")
-
 root.config(bg='#ffac3c')
-
 black = True
 tracks = 15
 
@@ -25,15 +23,24 @@ class boardFrame(Canvas):
         self.pack()
         self.text = StringVar()
         self.text = 'game start!!'        
-        self.widget = Label(self, text=self.text, fg='white', bg='black')
-        self.clacu =  Label(self, text='檢查所費時間:', fg='white', bg='black')
+        self.widget = Label(self, text=self.text, fg='black', bg='#ffac3c', font=("Courier", 20))
+        self.clacu =  Label(self, text='', fg='white', bg='black')
         self.widget.pack()
         self.clacu.pack()
-        self.create_window(600, 150, window=self.widget) 
-        self.create_window(600, 250, window=self.clacu) 
+        self.create_window(580, 150, window=self.widget) 
+        self.create_window(530, 430, window=self.clacu)
+        self.resetGame = Button(self, text = "重新開始", command = self.reset, anchor = W)
+        self.resetGame.configure(width = 10, activebackground = "#33B5E5", relief = FLAT)
+        self.create_window(610, 420, anchor=NW, window=self.resetGame)
         
-        
-        
+    def reset(self):
+        global black
+        self.delete("stone")
+        self.boardAssitant.clear()
+        black = True
+        self.widget['text'] ="black's turn"
+        self.bind("<Button-1>", self.callback)
+        self.clacu['text'] = ''
     def initBoardFrame(self, tracks): # Default tracks: 15
         for dir in ['v', 'h']:# If direction equals to 'v', draw vertical lines else horizon lines.                        
             for i in range(tracks):# ixp: initial x-axis point; iyp: initial y-axis point; 
@@ -58,11 +65,11 @@ class boardFrame(Canvas):
         eyp = 30*col + 32
         self.create_oval(ixp, iyp, exp, eyp, fill= 'black')
 
-    def placeStone(self, col, row, color='black'):
-        r = 12.5        
+    def placeStone(self, col, row, color='black'):  # placing stone
+        r = 12.5  # radius
         row , col = (row)*30, (col)*30
         circle = tuple([col-r,row-r,col+r, row+r])
-        self.create_oval(circle, fill= color)            
+        self.create_oval(circle, fill= color, tag='stone')        
 
     def key(self, event):
         print("pressed", repr(event.char))
@@ -76,7 +83,7 @@ class boardFrame(Canvas):
         if event.x < 16 or event.x > 464 or event.y < 16 or event.y > 464:
             return
         x, y = self.boardAssitant.findPosition(event.x, event.y)  # return column, row 31,63 [c0,r1]
-        r,c = y-1, x-1
+        r,c = y-1, x-1  # fetch position info, matrix initialize from 0,0
         placed = self.boardAssitant.check(r, c)
         # 30/30, 450/30, 450/450, 30/450        
         if not placed:
@@ -85,37 +92,36 @@ class boardFrame(Canvas):
                 self.placeStone(x, y, stoneColor)            
                 black = False
                 self.boardAssitant.boardInfo[r][c]= 1
-                self.widget['text'] ="white's turn"
-                
+                self.widget['text'] ="white's turn"                
             else:
                 stoneColor = 'white'
                 self.placeStone(x, y, stoneColor)
                 black = True
                 self.boardAssitant.boardInfo[r][c]= -1
-                self.widget['text'] ="black's turn"
+                self.widget['text'] ="black's turn"            
             print('row: {}, column: {} has been placed {} stone'.format(r, c, stoneColor))
             # print(self.boardAssitant.boardInfo)
             _color = 1 if stoneColor == 'black' else -1
-            self.checkContour(r,c, _color)
-    def checkContour(self, row, col, color):
+            self.ajacency(r,c, _color)
+            
+    def ajacency(self, row, col, color):
         '''
-            After placing stone, check color near stone if is same.
-            If so +1 and move to next, sumup with 4 direction total point.
-        '''
-        # sumdirection()
+            After placing stone, check near stones one by one if is same color.
+            If so, +1 point and move to next alone that direction, 
+            sumup with 4 direction total point.
+        '''        
         global black
         init = t ()        
         directions = self.boardAssitant.directions                
         for direction in directions.keys():
-            win = self.boardAssitant.sums(row, col, direction, color)
-            deltaTime = round(t()- init, 4)
-            print('time elapes: {}'.format(deltaTime))
-            self.clacu['text'] = '檢查所費時間: {} 秒'.format(deltaTime)
+            win = self.boardAssitant.sums(row, col, direction, color)            
             if win:
                 _color = 'black' if color == 1 else 'white'
-                self.widget['text'] = '{} win, game over'.format(_color)                
+                self.widget['text'] = ' {} win,\nGame over'.format(_color)              
                 self.unbind("<Button-1>")
-                
+        deltaTime = round(t()- init, 4)
+        print('time elapes: {}'.format(deltaTime))
+        self.clacu['text'] = '檢查所費時間: {} 秒'.format(deltaTime)       
 
 class boardInfo():
     def __init__(self):
@@ -123,16 +129,22 @@ class boardInfo():
         self.boardInfo = []
         self.directions = {'vertical' : [1,0], 'horizen': [0,1] , 'oblique': [-1,1], 'backslash': [-1,-1]}
         for _r in range(tracks):  # create a matrix record board info
-            self.boardInfo.append([None for _c in range(tracks)])                
-        self.last= {'row':None, 'col':None, 'color': None}
-        self.current = {'row':None, 'col':None, 'color': None}
+            self.boardInfo.append([None for _c in range(tracks)])
+        self.restartBox = self.boardInfo
 
     def check(self, row, column):
+        '''
+        check board specific postion's info: black, white or None
+        return: 1, -1, None
+        '''
         global tracks
         if row>=0 and row<=tracks-1 and column>=0 and column<= tracks-1:
             return self.boardInfo[row][column]
     
     def sums(self, r, c, direction,color):
+        '''
+        sumup points and check if win
+        '''
         points = 0
         startPosition = [r, c]
         _next = self.directions[direction]
@@ -157,6 +169,11 @@ class boardInfo():
         column = int(round(x/30,0))
         row = int(round(y/30,0))
         return column, row
+
+    def clear(self):
+        global tracks
+        restart = [[None for _ in range(tracks)] for __ in range(tracks)]
+        self.boardInfo = restart
 
 
 game = boardFrame(root, height=800, width=600)

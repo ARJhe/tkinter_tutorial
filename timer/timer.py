@@ -1,4 +1,5 @@
 #-*- coding: utf-8 -*-
+# Author: ArJhe
 from tkinter import *
 import time as t
 from threading import Timer, Thread, Condition, Event
